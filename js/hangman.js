@@ -13,11 +13,40 @@ var alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
 // LISTENERS
 window.onload = startGame();
 
+$("#letters").on("click", ".letter", function() {
+    checkLetter($(this).attr("id"));
+    disableButton($(this));
+});
+
+$(".replayBtn").on("click", function() {
+    location.reload();
+});
+
+$(".hintBtn").on("click", function() {
+    getHint();
+});
 // FUNCTIONS
+
+//Starts game
 function startGame() {
     pickWord();
+    createLetters();
     initBoard();
     updateBoard();
+}
+
+//Randomaly selects word from array.
+function pickWord() {
+    var randomInt = Math.floor(Math.random() * words.length);
+    selectedWord = words[randomInt].word.toUpperCase();
+    selectedHint = words[randomInt].hint;
+}
+
+function createLetters() {
+    for(var letter of alphabet) {
+        var letterInput = '"' + letter + '"';
+        $("#letters").append("<button class='btn btn-success letter' id='" + letter + "'>" + letter + "</button>");
+    }
 }
 
 //fill board with underscores
@@ -27,80 +56,47 @@ function initBoard() {
     }
 }
 
-function pickWord() {
-    var randomInt = Math.floor(Math.random() * words.length);
-    selectedWord = words[randomInt].word.toUpperCase();
-    selectedHint = words[randomInt].hint;
-}
-
 function updateBoard() {
-    for(var letter of board) {
-        document.getElementById("word").innerHTML += letter + " ";
+    $("#word").empty();
+    
+    for (var i=0; i < board.length; i++) {
+        $("#word").append(board[i] + " ");
     }
+    
+    $("#word").append("<br />");
+    $("#word").append("<span class='hint'>Hint: " + selectedHint + "</span>");
 }
 
-$("#letterBtn").click(function() {
-    var boxVal = $("#letterBox").val();
-    console.log("You pressed hte button and it had the value: " + boxVal);
-})
-
-function createLetters() {
-    for(var letter of alphabet) {
-        $("#letters").append("<button class='letter' id='" + letter + "'>" + letter + "</button>");
+function updateWord(positions, letter) {
+    for (var pos of positions) {
+        board[pos] = letter;
     }
-}
-
-$(".letter").click(function() {
-    checkLetter($(this).attr("id"));
-}
-
-function picWord() {
-    var randomInt = Math.floor(Math.random() * words.length);
-    selectedWord = words[randomInt].toUpperCase();
+    updateBoard(board);
+    
+    if(!board.includes('_')) {
+        endGame(true);
+    }
 }
 
 function checkLetter(letter) {
     var positions = new Array();
                    
     for (var i = 0; i < selectedWord.length; i++) {
-        if (letter = selectedWord[i]) {
+        if (letter == selectedWord[i]) {
             positions.push(i);
         }
     }
      
     if (positions.length > 0) {
         updateWord(positions, letter);
-                   
-        if (!board.includes('_')) {
-            endGame(true);
-        }
-                   
     } else {
         remainingGuesses -= 1;
         updateMan();
+                   
+        if (remainingGuesses <= 0) {
+            endGame(false);
+        }
     }
-                   
-    if (remainingGuesses <= 0) {
-        endGame(false);
-    }
-}
-                   
-function updateWord(positions, letter) {
-    for (var pos of positions) {
-        board[pos] = letter;
-    }
-    updateBoard();
-}
-                   
-function updateBoard() {
-    $("#word").empty();
-                   
-    for (var i=0; i < board.length; i++) {
-        $("#word").append(board[i] + " ");
-    }
-                   
-    $("#word").append("<br />");
-    $("#word").append("<span class='hint'>Hint: " + selectedHint + "</span>");
 }
 
 function updateMan() {
@@ -116,9 +112,15 @@ function endGame(win) {
         $('#lost').show();
     }
 }
-                   
-$(".replayBtn").on("click", function() {
-    location.reload();
-})
-                   
-        
+
+function disableButton(btn) {
+    btn.prop("disabled", true);
+    btn.attr("class", "btn btn-danger");
+}
+
+function getHint() {
+    $(".hint").show();
+    remainingGuesses -= 1;
+    updateMan();
+}
+
